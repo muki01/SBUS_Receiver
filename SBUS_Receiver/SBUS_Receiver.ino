@@ -1,7 +1,7 @@
 #include <nRF24L01.h>
 #include <RF24.h>
-#include <SPI.h>
-RF24 radio(6, 7);
+//#include <SPI.h>
+RF24 radio(9, 10);
 const uint64_t pipeIn = 0xE8E8F0F0E1LL;
 
 // #define SerialOUTPUT
@@ -110,13 +110,24 @@ void reset_received_Data() {
 }
 
 void setup() {
-  SPI.begin(8, 5, 10, 7);  // SCK=8, MISO=5, MOSI=10, CSN=7
-  if (!radio.begin()) {
 #ifdef SerialOUTPUT
-    Serial.println("NRF24L01 Error");
+  Serial.begin(115200);
+  Serial.println(SCK);
+  Serial.println(MISO);
+  Serial.println(MOSI);
+  Serial.println(SS);
+#else
+  SBus.begin(100000, SERIAL_8E2);
 #endif
-    while (1)
-      ;
+  //SPI.begin(8, 5, 10, 7);  // SCK=8, MISO=5, MOSI=10, CSN=7
+  delay(1000);
+  if (!radio.begin()) {
+    while (1) {
+#ifdef SerialOUTPUT
+      Serial.println("NRF24L01 Error");
+#endif
+      delay(1000);
+    }
   }
 
   radio.setAutoAck(false);
@@ -126,12 +137,6 @@ void setup() {
   radio.startListening();
 
   reset_received_Data();
-
-#ifdef SerialOUTPUT
-  Serial.begin(115200);
-#else
-  SBus.begin(100000, SERIAL_8E2);
-#endif
 }
 
 void loop() {
@@ -145,6 +150,10 @@ void loop() {
     channelValue[5] = map(receiverData.ch6, 0, 1, 1000, 2000);
     channelValue[6] = map(receiverData.ch7, 0, 1, 1000, 2000);
     channelValue[7] = map(receiverData.ch8, 0, 1, 1000, 2000);
+
+#ifdef SerialOUTPUT
+    Serial.printf("Channel Values: %d %d %d %d %d %d %d %d\n", channelValue[0], channelValue[1], channelValue[2], channelValue[3], channelValue[4], channelValue[5], channelValue[6], channelValue[7]);
+#endif
 
     lastRecvTime = millis();
   }
